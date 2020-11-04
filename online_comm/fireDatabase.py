@@ -32,7 +32,8 @@ class Auth:
 
     def create_user(self, email, password, name):
         # TODO remove name before pushing
-        self.currentUser = firebaseAuth.create_user_with_email_and_password(email, password, name)
+        self.currentUser = firebaseAuth.create_user_with_email_and_password(
+            email, password, name)
 
         self.userID = self.currentUser["localId"]
         print('Signup Success')
@@ -41,20 +42,30 @@ class Auth:
             'userId': self.userID,
             'name': name,
             'email': self.currentUser['email'],
-            'profileIndex': randint(1, 7)
+            'profileIndex': randint(1, 7),
         }
 
         Variables.userData = data
 
-        firebaseDB.child('users').child(f"{email}").set(data)
+        try:
+            # TODO .com of email gives error uploading
+            # e.g.)  email.com.json - error
+            # e.g.) emailcom.json   - passed
+            firebaseDB.child('users').child(
+                str(self.currentUser['email']).replace(".", "")).set(data)
+            print('uploaded user data')
+        except:
+            raise Exception('USER_DATA_NOT_UPLOADED')
 
         return self.currentUser
 
     def login_user(self, email, password):
-        self.currentUser = firebaseAuth.sign_in_with_email_and_password(email, password)
+        self.currentUser = firebaseAuth.sign_in_with_email_and_password(
+            email, password)
         self.userID = self.currentUser["localId"]
 
-        Variables.userData = firebaseDB.child('users').child(self.currentUser['displayName']).get().val()
+        Variables.userData = firebaseDB.child('users').child(
+            self.currentUser['email']).get().val()
 
         print('Login Success')
 
@@ -65,7 +76,7 @@ user_auth = Auth()
 
 
 def create_chat_room(chatroom_id='', chatroom_key=''):
-    length = 0
+    length = 1
 
     encrypted_chatroom_key = cipher.encrypt(chatroom_key)
 
@@ -87,23 +98,29 @@ def create_chat_room(chatroom_id='', chatroom_key=''):
     user_auth.CHATROOM_NAME = f'chatroom_{length}'
 
     try:
-        firebaseDB.child('chat_rooms').child(user_auth.CHATROOM_NAME).child("details").set(data)
+        firebaseDB.child('chat_rooms').child(
+            user_auth.CHATROOM_NAME).child("details").set(data)
 
-        firebaseDB.child('chat_rooms').child(user_auth.CHATROOM_NAME).child('chats').child('temp').set(
-            {
-                'msg': "",
-                'user': "dummy",
-            }
-        )
+        firebaseDB.child('chat_rooms').child(
+            user_auth.CHATROOM_NAME).child('chats').child('temp').set({
+                'msg':
+                "",
+                'user':
+                "dummy",
+            })
 
-        firebaseDB.child('chat_rooms').child(user_auth.CHATROOM_NAME).child('attendees').child(user_auth.userID).set(
-            {
-                'name': user_auth.currentUser['displayName'],
-                'email': user_auth.currentUser['email'],
-                'joined_at': datetime.now().timestamp(),
-                'status': 'ONLINE'
-            }
-        )
+        firebaseDB.child('chat_rooms').child(
+            user_auth.CHATROOM_NAME).child('attendees').child(
+                user_auth.userID).set({
+                    'name':
+                    user_auth.currentUser['displayName'],
+                    'email':
+                    user_auth.currentUser['email'],
+                    'joined_at':
+                    datetime.now().timestamp(),
+                    'status':
+                    'ONLINE'
+                })
 
         return data
 
@@ -116,8 +133,10 @@ def join_chat_room(chatroom_id, chatroom_password):
 
     # Function
     def get_password(_room):
-        encrypted_chatroom_key = _room.val()['details']['encrypted_chatroom_key']
-        decrypted_password = cipher.decrypt(bytes.fromhex(encrypted_chatroom_key))
+        encrypted_chatroom_key = _room.val(
+        )['details']['encrypted_chatroom_key']
+        decrypted_password = cipher.decrypt(
+            bytes.fromhex(encrypted_chatroom_key))
 
         if chatroom_password == decrypted_password:
             print('success join')
@@ -130,7 +149,7 @@ def join_chat_room(chatroom_id, chatroom_password):
 
     if all_rooms is not None:
         for room in all_rooms.each():
-            if chatroom_id == room.val()['details']['chatroomID']:
+            if "details" in room.val() and chatroom_id == room.val()['details']['chatroomID']:
                 _flag = 1
 
                 # user_auth.CREATED_BY = room.val()['details']['created_name']
@@ -138,24 +157,28 @@ def join_chat_room(chatroom_id, chatroom_password):
                 user_auth.CHATROOM_NAME = f"{room.key()}"
 
                 try:
-                    firebaseDB.child('chat_rooms').child(user_auth.CHATROOM_NAME).child('attendees').child(
-                        user_auth.userID).set(
-                        {
-                            'name': user_auth.currentUser['displayName'],
-                            'email': user_auth.currentUser['email'],
-                            'joined_at': datetime.now().timestamp(),
-                            'status': 'ONLINE'
-                        }
-                    )
+                    firebaseDB.child('chat_rooms').child(
+                        user_auth.CHATROOM_NAME).child('attendees').child(
+                            user_auth.userID).set({
+                                'name':
+                                user_auth.currentUser['displayName'],
+                                'email':
+                                user_auth.currentUser['email'],
+                                'joined_at':
+                                datetime.now().timestamp(),
+                                'status':
+                                'ONLINE'
+                            })
 
-                    firebaseDB.child('chat_rooms').child(user_auth.CHATROOM_NAME).child('chats').child('temp').set(
-                        {
-                            'msg': "",
-                            'user': "dummy",
-                        }
-                    )
+                    firebaseDB.child('chat_rooms').child(
+                        user_auth.CHATROOM_NAME).child('chats').child(
+                            'temp').set({
+                                'msg': "",
+                                'user': "dummy",
+                            })
 
-                    data = firebaseDB.child('chat_rooms').child(user_auth.CHATROOM_NAME).child('details').get().val()
+                    data = firebaseDB.child('chat_rooms').child(
+                        user_auth.CHATROOM_NAME).child('details').get().val()
 
                     # data = {
                     #     'chatroomID': user_auth.CHATROOM_ID,

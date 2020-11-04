@@ -93,6 +93,7 @@ class CreateChatroomGUI(tk.Frame):
         self.doNotUse()
         from chatroom_gui import ChatroomGUI
         cont.show_frame(ChatroomGUI)
+        self.pass_var.set("")
 
     def createChatroom(self, _id_entry, key, cont):
         self.doNotUse()

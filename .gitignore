@@ -7,6 +7,8 @@ extras/
 online_comm/aes_implementation.py
 online_comm/aes_secure_encrypt.py
 bfg-1.13.0.jar
+gui_qt/
+online_comm/assets/qt_resource_file.qrc
 
 *.py[cod]
 *$py.class
